@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, classification_report
 
 from modelo_cnn_lstm import crear_modelo
 
-SEMILLAS = [0,1,2,3,4,5,6,7,8,9]
+SEMILLAS = [10,11,12,13,14,15,16,17,18,19]  # Semillas para inicialización de pesos y split de datos
 
 # Las dos configuraciones a comparar. "liviana" es la que dio 67% en una
 # corrida suelta; "pesada" es la que colapsó a resultados degenerados.
