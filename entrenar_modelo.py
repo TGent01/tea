@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 
 from modelo_cnn_lstm import crear_modelo
+from config import CONFIG
 
 # --- Semilla fija para reproducibilidad ---
 # Sin esto, cada corrida inicializa los pesos de la red y aplica Dropout de
@@ -14,8 +15,9 @@ from modelo_cnn_lstm import crear_modelo
 # semilla no elimina la sensibilidad del modelo a la inicialización, pero sí
 # hace que una misma corrida sea repetible, para poder comparar cambios de
 # forma confiable.
-SEED = 42
-keras.utils.set_random_seed(SEED)
+keras.utils.set_random_seed(CONFIG['seed'])
+
+print(f"Configuración usada en esta corrida:\n{CONFIG}\n")
 
 # --- Cargar el dataset ya preparado por construir_dataset.py ---
 X_train_full = np.load("dataset_listo/X_train.npy")
@@ -35,8 +37,8 @@ print(f"Train (total): {X_train_full.shape}, Test: {X_test.shape}")
 etiquetas_enteras = np.argmax(y_train_full, axis=1)
 X_tr, X_val, y_tr, y_val = train_test_split(
     X_train_full, y_train_full,
-    test_size=0.2,
-    random_state=42,
+    test_size=CONFIG['test_size'],
+    random_state=CONFIG['seed'],
     stratify=etiquetas_enteras,
     shuffle=True,
 )
@@ -52,20 +54,27 @@ for i, c in enumerate(CLASES):
 # validación, la validación deja de ser honesta). Duplica el tamaño efectivo
 # del set de entrenamiento, lo cual ayuda a mitigar el sobreajuste observado
 # con un dataset tan chico.
-X_tr_espejo = np.flip(X_tr, axis=3)  # eje 3 = ancho de la imagen
-X_tr = np.concatenate([X_tr, X_tr_espejo], axis=0)
-y_tr = np.concatenate([y_tr, y_tr], axis=0)
+if CONFIG['horizontal_flip']:
+    X_tr_espejo = np.flip(X_tr, axis=3)  # eje 3 = ancho de la imagen
+    X_tr = np.concatenate([X_tr, X_tr_espejo], axis=0)
+    y_tr = np.concatenate([y_tr, y_tr], axis=0)
 
-indices_mezclados = np.random.permutation(len(X_tr))
-X_tr = X_tr[indices_mezclados]
-y_tr = y_tr[indices_mezclados]
+    indices_mezclados = np.random.permutation(len(X_tr))
+    X_tr = X_tr[indices_mezclados]
+    y_tr = y_tr[indices_mezclados]
 
-print(f"Entrenamiento tras aumento (espejo horizontal): {X_tr.shape}")
+print(f"Entrenamiento tras aumento de datos: {X_tr.shape}")
 
 # --- Construir y compilar el modelo ---
-modelo = crear_modelo(num_clases=len(CLASES))
+modelo = crear_modelo(
+    num_clases=len(CLASES),
+    usar_bn=CONFIG['usar_batch_norm'],
+    dropout_cnn=CONFIG['dropout_cnn'],
+    dropout_lstm=CONFIG['dropout_lstm'],
+    l2_reg=CONFIG['l2_reg'],
+)
 modelo.compile(
-    optimizer=Adam(learning_rate=5e-4, clipnorm=1.0),
+    optimizer=Adam(learning_rate=CONFIG['learning_rate'], clipnorm=CONFIG['clipnorm']),
     loss="categorical_crossentropy",
     metrics=["accuracy"],
 )
@@ -74,7 +83,7 @@ modelo.summary()
 # --- Callbacks ---
 early_stopping = EarlyStopping(
     monitor="val_loss",
-    patience=15,
+    patience=CONFIG['early_stopping_patience'],
     restore_best_weights=True,
 )
 checkpoint = ModelCheckpoint(
@@ -87,8 +96,8 @@ checkpoint = ModelCheckpoint(
 historial = modelo.fit(
     X_tr, y_tr,
     validation_data=(X_val, y_val),
-    epochs=100,
-    batch_size=8,  # vuelve a subir un poco: ahora hay el doble de datos de entrenamiento
+    epochs=CONFIG['epochs'],
+    batch_size=CONFIG['batch_size'],
     shuffle=True,
     callbacks=[early_stopping, checkpoint],
 )

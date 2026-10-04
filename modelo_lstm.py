@@ -2,7 +2,9 @@ from keras.models import Model
 from keras.layers import Input, LSTM, Dropout, Dense
 from keras.regularizers import l2 as l2_reg_fn
 
-SEQUENCE_LENGTH = 40
+from config import CONFIG
+
+SEQUENCE_LENGTH = CONFIG['sequence_length']
 FEATURE_DIM = 64  # debe coincidir con la salida del extractor CNN (cnn_extractor.py)
 
 

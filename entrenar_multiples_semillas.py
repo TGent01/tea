@@ -6,16 +6,21 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 
 from modelo_cnn_lstm import crear_modelo
+from config import CONFIG
 
-SEMILLAS = [20,21,22,23,24,25,26,27,28,29]  # Semillas para inicialización de pesos y split de datos
+SEMILLAS = [0, 1, 2, 3, 4]
 
-# Las dos configuraciones a comparar. "liviana" es la que dio 67% en una
-# corrida suelta; "pesada" es la que colapsó a resultados degenerados.
-# Esta vez las comparamos de forma controlada: mismas semillas, mismo split
-# de datos, para saber cuál es mejor EN PROMEDIO, no en una corrida suelta.
+# Las dos configuraciones a comparar. "liviana" toma los valores de
+# regularización definidos en config.py (la configuración que se usa en
+# entrenar_modelo.py); "pesada" es una variante alternativa explícita, para
+# comparar de forma controlada si vale la pena BatchNormalization + más
+# regularización con este dataset.
 CONFIGS = {
-    "liviana (sin BN, dropout 0.3, sin L2)": dict(
-        usar_bn=False, dropout_cnn=0.3, dropout_lstm=0.3, l2_reg=0.0
+    "liviana (según config.py)": dict(
+        usar_bn=CONFIG['usar_batch_norm'],
+        dropout_cnn=CONFIG['dropout_cnn'],
+        dropout_lstm=CONFIG['dropout_lstm'],
+        l2_reg=CONFIG['l2_reg'],
     ),
     "pesada (con BN, dropout 0.3/0.4, L2 1e-4)": dict(
         usar_bn=True, dropout_cnn=0.3, dropout_lstm=0.4, l2_reg=1e-4
@@ -44,37 +49,42 @@ for nombre_config, params in CONFIGS.items():
         print(f"\n{'=' * 60}\n{nombre_config} — semilla {semilla}\n{'=' * 60}")
         keras.utils.set_random_seed(semilla)
 
-        # Mismo random_state en el split de datos (no es la semilla del
-        # modelo) para que todas las corridas usen la misma partición, y la
-        # única diferencia real sea la inicialización de la red.
+        # Mismo random_state en el split de datos (el de config.py, no la
+        # semilla del modelo) para que todas las corridas usen la misma
+        # partición, y la única diferencia real sea la inicialización de la red.
         X_tr, X_val, y_tr, y_val = train_test_split(
             X_train_full, y_train_full,
-            test_size=0.2,
-            random_state=42,
+            test_size=CONFIG['test_size'],
+            random_state=CONFIG['seed'],
             stratify=etiquetas_enteras,
             shuffle=True,
         )
 
-        # Aumento de datos: espejo horizontal (solo entrenamiento)
-        X_tr = np.concatenate([X_tr, np.flip(X_tr, axis=3)], axis=0)
-        y_tr = np.concatenate([y_tr, y_tr], axis=0)
-        idx = np.random.permutation(len(X_tr))
-        X_tr, y_tr = X_tr[idx], y_tr[idx]
+        # Aumento de datos: espejo horizontal (solo entrenamiento), según config.py
+        if CONFIG['horizontal_flip']:
+            X_tr = np.concatenate([X_tr, np.flip(X_tr, axis=3)], axis=0)
+            y_tr = np.concatenate([y_tr, y_tr], axis=0)
+            idx = np.random.permutation(len(X_tr))
+            X_tr, y_tr = X_tr[idx], y_tr[idx]
 
         modelo = crear_modelo(num_clases=len(CLASES), **params)
         modelo.compile(
-            optimizer=Adam(learning_rate=5e-4, clipnorm=1.0),
+            optimizer=Adam(learning_rate=CONFIG['learning_rate'], clipnorm=CONFIG['clipnorm']),
             loss="categorical_crossentropy",
             metrics=["accuracy"],
         )
 
-        early_stopping = EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
+        early_stopping = EarlyStopping(
+            monitor="val_loss",
+            patience=CONFIG['early_stopping_patience'],
+            restore_best_weights=True,
+        )
 
         modelo.fit(
             X_tr, y_tr,
             validation_data=(X_val, y_val),
-            epochs=100,
-            batch_size=8,
+            epochs=CONFIG['epochs'],
+            batch_size=CONFIG['batch_size'],
             shuffle=True,
             callbacks=[early_stopping],
             verbose=0,

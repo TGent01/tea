@@ -4,8 +4,10 @@ from keras.layers import (
 )
 from keras.regularizers import l2 as l2_reg_fn
 
-SEQUENCE_LENGTH = 40
-IMAGE_HEIGHT, IMAGE_WIDTH = 64, 64
+from config import CONFIG
+
+SEQUENCE_LENGTH = CONFIG['sequence_length']
+IMAGE_HEIGHT = IMAGE_WIDTH = CONFIG['image_size']
 CANALES = 3
 
 
