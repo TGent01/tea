@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from modelo_cnn_lstm import crear_modelo
 from config import CONFIG
 
-SEMILLAS = [0, 1, 2, 3, 4]
+SEMILLAS = [5,6,7,8,9]
 
 # Las dos configuraciones a comparar. "liviana" toma los valores de
 # regularización definidos en config.py (la configuración que se usa en
