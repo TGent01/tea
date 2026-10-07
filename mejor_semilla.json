@@ -1,0 +1,10 @@
+{
+  "liviana": {
+    "semilla": 19,
+    "accuracy": 0.5333
+  },
+  "pesada": {
+    "semilla": 2,
+    "accuracy": 0.5333
+  }
+}
