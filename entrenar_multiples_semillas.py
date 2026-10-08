@@ -26,12 +26,12 @@ ARCHIVO_MEJOR_SEMILLA = "mejor_semilla.json"
 # regularización definidos en config.py; "pesada" es la variante alternativa
 # (BatchNormalization + más regularización).
 CONFIGS = {
-    "liviana": dict(
-        usar_bn=CONFIG['usar_batch_norm'],
-        dropout_cnn=CONFIG['dropout_cnn'],
-        dropout_lstm=CONFIG['dropout_lstm'],
-        l2_reg=CONFIG['l2_reg'],
-    ),
+    #"liviana": dict(
+     #   usar_bn=CONFIG['usar_batch_norm'],
+      #  dropout_cnn=CONFIG['dropout_cnn'],
+       # dropout_lstm=CONFIG['dropout_lstm'],
+        #l2_reg=CONFIG['l2_reg'],
+    #),
     "pesada": dict(
         usar_bn=True, dropout_cnn=0.3, dropout_lstm=0.4, l2_reg=1e-4
     ),
