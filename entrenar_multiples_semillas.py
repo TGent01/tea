@@ -18,7 +18,7 @@ from config import CONFIG
 #   (a) aparece una semilla con accuracy MAYOR que la mejor guardada
 #       (se guarda como nueva mejor semilla), o
 #   (b) el promedio acumulado de accuracy de la búsqueda llega a UMBRAL_PROMEDIO.
-SEMILLA_MAX = 100
+SEMILLA_MAX = 80
 UMBRAL_PROMEDIO = 0.6
 ARCHIVO_MEJOR_SEMILLA = "mejor_semilla.json"
 
@@ -26,12 +26,12 @@ ARCHIVO_MEJOR_SEMILLA = "mejor_semilla.json"
 # regularización definidos en config.py; "pesada" es la variante alternativa
 # (BatchNormalization + más regularización).
 CONFIGS = {
-    #"liviana": dict(
-     #   usar_bn=CONFIG['usar_batch_norm'],
-      #  dropout_cnn=CONFIG['dropout_cnn'],
-       # dropout_lstm=CONFIG['dropout_lstm'],
-        #l2_reg=CONFIG['l2_reg'],
-    #),
+    "liviana": dict(
+       usar_bn=CONFIG['usar_batch_norm'],
+      dropout_cnn=CONFIG['dropout_cnn'],
+        dropout_lstm=CONFIG['dropout_lstm'],
+        l2_reg=CONFIG['l2_reg'],
+    ),
     "pesada": dict(
         usar_bn=True, dropout_cnn=0.3, dropout_lstm=0.4, l2_reg=1e-4
     ),
